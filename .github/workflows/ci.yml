@@ -29,17 +29,28 @@ jobs:
         with:
           submodules: recursive
 
-      # UPDATED: v2 uses newer node/cache versions internally
-      - name: Setup Micromamba (for clspv)
+      # 1. Setup Micromamba
+      # We conditionally exclude 'clspv' on Windows because it's not on conda-forge for win-64
+      - name: Setup Micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: build-env
           create-args: >-
-            clspv
             make
             compilers
+            ${{ matrix.os != 'windows-latest' && 'clspv' || '' }}
           init-shell: bash
           generate-run-shell: false
+
+      # 2. Manual Clspv Install for Windows
+      - name: Install clspv (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Download a known working binary release of clspv for Windows
+          curl -L -o clspv.zip https://github.com/google/clspv/releases/download/v2024.1.0/clspv-windows.zip
+          unzip clspv.zip -d clspv_bin
+          # Add to GITHUB_PATH so subsequent steps can find 'clspv.exe'
+          echo "$(pwd)/clspv_bin" >> $GITHUB_PATH
 
       - name: Setup Vulkan SDK
         uses: humbletim/install-vulkan-sdk@v1.2
@@ -49,10 +60,8 @@ jobs:
 
       - name: Build with Make
         run: |
-          # Activate conda environment
-          # Note: The hook syntax slightly differs in newer micromamba actions
-          # but typically this pattern remains robust for bash:
-          source $MAMBA_EXE shell hook -s bash
+          # FIX: Use 'eval' and command substitution $() for the hook
+          eval "$($MAMBA_EXE shell hook -s bash)"
           micromamba activate build-env
           
           echo "Building on $(uname -s)..."
@@ -94,13 +103,13 @@ jobs:
         with:
           submodules: recursive
 
-      # UPDATED: v2
-      - name: Setup Micromamba (for clspv)
+      - name: Setup Micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: build-env
           create-args: clspv make
           init-shell: bash
+          generate-run-shell: false
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
@@ -109,7 +118,8 @@ jobs:
 
       - name: Build Android
         run: |
-          source $MAMBA_EXE shell hook -s bash
+          # FIX: Same fix here for Android build
+          eval "$($MAMBA_EXE shell hook -s bash)"
           micromamba activate build-env
           
           mkdir -p build/android
@@ -120,33 +130,3 @@ jobs:
         with:
           name: build-android
           path: build/android/libs/**/*
-
-  # ---------------------------------------------------
-  # 3. Release (Only on push to main)
-  # ---------------------------------------------------
-  release:
-    name: Create Release
-    needs: [build-desktop, build-android]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      
-    steps:
-      - name: Download Desktop Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: build-*
-          path: artifacts
-          merge-multiple: true
-
-      # UPDATED: v2 to avoid deprecation warnings
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: release-${{ github.run_number }}
-          name: Release ${{ github.run_number }}
-          files: |
-            artifacts/**/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
