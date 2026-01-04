@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
-    # Use bash on all OSs to ensure Makefile syntax works
+    # Force bash to ensure Makefile compatibility on Windows
     defaults:
       run:
         shell: bash
@@ -31,6 +31,7 @@ jobs:
           submodules: recursive
 
       # Install clspv (OpenCL -> SPIR-V compiler) via Conda
+      # This is the most reliable cross-platform method
       - name: Setup Micromamba (for clspv)
         uses: mamba-org/setup-micromamba@v1
         with:
@@ -42,11 +43,12 @@ jobs:
           init-shell: bash
           generate-run-shell: false
 
-      # Install Vulkan SDK
+      # CORRECTED: Use humbletim/install-vulkan-sdk
       - name: Setup Vulkan SDK
-        uses: humantools/setup-vulkan-sdk@v1.1.1
+        uses: humbletim/install-vulkan-sdk@v1.1.1
         with:
-          vulkan-sdk-version: '1.3.261.1' # Pinning version for stability
+          version: '1.3.250.1' # Pinning version for stability
+          cache: true
 
       # Build Step
       - name: Build with Make
@@ -55,15 +57,18 @@ jobs:
           source $MAMBA_EXE shell hook -s bash
           micromamba activate build-env
           
+          # Debug info
           echo "Building on $(uname -s)..."
+          echo "Vulkan SDK is at $VULKAN_SDK"
+          
           make all
 
-      # Prepare Artifacts (Rename for clarity)
+      # Prepare Artifacts
       - name: Prepare Artifacts
         run: |
           mkdir release_dist
           
-          # Handle OS specific extensions
+          # Rename based on OS
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             mv build/runner.run release_dist/runner-windows.exe
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
@@ -72,7 +77,7 @@ jobs:
             mv build/runner.run release_dist/runner-linux
           fi
           
-          # Copy compiled shaders
+          # Copy compiled shaders (ignore errors if none found immediately)
           cp *.spv release_dist/ || true
 
       - name: Upload Artifacts
@@ -97,7 +102,7 @@ jobs:
         with:
           submodules: recursive
 
-      # Android needs clspv to compile shaders first
+      # Android compilation needs clspv to compile shaders FIRST
       - name: Setup Micromamba (for clspv)
         uses: mamba-org/setup-micromamba@v1
         with:
@@ -105,9 +110,9 @@ jobs:
           create-args: clspv make
           init-shell: bash
 
-      # Setup Android NDK
+      # CORRECTED: Use nttld/setup-ndk
       - name: Setup Android NDK
-        uses: android-actions/setup-ndk@v3
+        uses: nttld/setup-ndk@v1
         with:
           ndk-version: r25c
 
@@ -117,10 +122,11 @@ jobs:
           source $MAMBA_EXE shell hook -s bash
           micromamba activate build-env
           
-          # Create output directory explicitly as Makefile expects it
+          # Create output directory
           mkdir -p build/android
           
           # Run the make target
+          # ndk-build will use the NDK environment set up by the action
           make android
 
       - name: Upload Android Artifacts
@@ -148,16 +154,11 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: List Artifacts
-        run: ls -R artifacts
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: release-${{ github.run_number }}
           name: Release ${{ github.run_number }}
-          draft: false
-          prerelease: false
           files: |
             artifacts/**/*
         env:
