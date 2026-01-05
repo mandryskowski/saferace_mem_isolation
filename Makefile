@@ -1,8 +1,15 @@
-CXXFLAGS = -std=c++17 -DVK_USE_PLATFORM_WIN32_KHR
+UNAME_S := $(shell uname -s)
+
+CXXFLAGS = -std=c++17
 CLSPVFLAGS = --cl-std=CL2.0 --spv-version=1.3 --inline-entry-points
 
-VULKAN_INCLUDE = -I"$(VULKAN_SDK)/Include"
-VULKAN_LIB = -L"$(VULKAN_SDK)/Lib"
+ifeq ($(UNAME_S),Linux)
+    VULKAN_INCLUDE = -I"$(VULKAN_SDK)/include"
+    VULKAN_LIB = -L"$(VULKAN_SDK)/lib" -lvulkan
+else
+    VULKAN_INCLUDE = -I"$(VULKAN_SDK)/Include"
+    VULKAN_LIB = -L"$(VULKAN_SDK)/Lib" -lvulkan-1
+endif
 
 ALL_SHADERS = $(wildcard *.cl)
 IGNORE := phys-device-hack.cl
