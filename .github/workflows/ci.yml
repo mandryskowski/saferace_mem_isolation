@@ -48,16 +48,18 @@ jobs:
 
       - name: Build with Make
         run: |
-          eval "$($MAMBA_EXE shell hook -s bash)"
-          # micromamba activate build-env
           
           echo "Building on $(uname -s)..."
-          
+
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-             make all CXX=g++ CC=gcc
+             export VULKAN_SDK=$(cygpath -u "$VULKAN_SDK")
+             
+             if [ -d "$VULKAN_SDK/Include" ] && [ ! -d "$VULKAN_SDK/include" ]; then
+                 ln -s "$VULKAN_SDK/Include" "$VULKAN_SDK/include"
+             fi
           else
-             make all
-          fi
+          
+          make all CXX=g++ CC=gcc
 
       - name: Prepare Artifacts
         run: |
