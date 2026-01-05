@@ -49,7 +49,7 @@ jobs:
       - name: Build with Make
         run: |
           eval "$($MAMBA_EXE shell hook -s bash)"
-          micromamba activate build-env
+          # micromamba activate build-env
           
           echo "Building on $(uname -s)..."
           
