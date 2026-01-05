@@ -5,7 +5,7 @@ CLSPVFLAGS = --cl-std=CL2.0 --spv-version=1.3 --inline-entry-points
 
 VULKAN_INCLUDE = -I"$(VULKAN_SDK)/include"
 
-ifeq ($(UNAME_S),Linux)
+ifneq ($(filter $(UNAME_S),Linux Darwin),)
     VULKAN_LIB = -L"$(VULKAN_SDK)/lib" -lvulkan
 else
     VULKAN_LIB = -L"$(VULKAN_SDK)/lib" -lvulkan-1 -static
