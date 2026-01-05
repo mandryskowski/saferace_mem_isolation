@@ -42,16 +42,6 @@ jobs:
           init-shell: bash
           generate-run-shell: false
 
-      # 2. Manual Clspv Install for Windows
-      - name: Install clspv (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          # Download a known working binary release of clspv for Windows
-          curl -L -o clspv.zip https://github.com/google/clspv/releases/download/v2024.1.0/clspv-windows.zip
-          unzip clspv.zip -d clspv_bin
-          # Add to GITHUB_PATH so subsequent steps can find 'clspv.exe'
-          echo "$(pwd)/clspv_bin" >> $GITHUB_PATH
-
       - name: Setup Vulkan SDK
         uses: humbletim/install-vulkan-sdk@v1.2
         with:
