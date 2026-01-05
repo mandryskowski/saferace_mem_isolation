@@ -57,7 +57,7 @@ jobs:
              if [ -d "$VULKAN_SDK/Include" ] && [ ! -d "$VULKAN_SDK/include" ]; then
                  ln -s "$VULKAN_SDK/Include" "$VULKAN_SDK/include"
              fi
-          else
+          fi
           
           make all CXX=g++ CC=gcc
 
