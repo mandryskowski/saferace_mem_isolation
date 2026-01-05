@@ -29,17 +29,6 @@ jobs:
         with:
           submodules: recursive
 
-      # - name: Setup Micromamba
-      #   uses: mamba-org/setup-micromamba@v2
-      #   with:
-      #     environment-name: build-env
-      #     create-args: >-
-      #       make
-      #       ${{ matrix.os == 'windows-latest' && 'clang' || 'compilers' }}
-      #       ${{ matrix.os != 'windows-latest' && 'clspv' || '' }}
-      #     init-shell: bash
-      #     generate-run-shell: false
-
       - name: Setup Vulkan SDK
         uses: humbletim/install-vulkan-sdk@v1.2
         with:
@@ -52,14 +41,6 @@ jobs:
           echo "Building on $(uname -s)..."
 
           find $VULKAN_SDK
-
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-             export VULKAN_SDK=$(cygpath -u "$VULKAN_SDK")
-             
-             if [ -d "$VULKAN_SDK/Include" ] && [ ! -d "$VULKAN_SDK/include" ]; then
-                 ln -s "$VULKAN_SDK/Include" "$VULKAN_SDK/include"
-             fi
-          fi
           
           make all CXX=g++ CC=gcc
 
