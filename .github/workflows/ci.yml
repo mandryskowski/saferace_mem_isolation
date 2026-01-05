@@ -51,6 +51,8 @@ jobs:
           
           echo "Building on $(uname -s)..."
 
+          find $VULKAN_SDK
+
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
              export VULKAN_SDK=$(cygpath -u "$VULKAN_SDK")
              
