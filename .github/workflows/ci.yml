@@ -29,28 +29,16 @@ jobs:
         with:
           submodules: recursive
 
-      # 1. Setup Micromamba
-      # We conditionally exclude 'clspv' on Windows because it's not on conda-forge for win-64
       - name: Setup Micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: build-env
           create-args: >-
             make
-            compilers
+            ${{ matrix.os == 'windows-latest' && 'clang' || 'compilers' }}
             ${{ matrix.os != 'windows-latest' && 'clspv' || '' }}
           init-shell: bash
           generate-run-shell: false
-
-      # 2. Manual Clspv Install for Windows
-      - name: Install clspv (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          # Download a known working binary release of clspv for Windows
-          curl -L -o clspv.zip https://github.com/google/clspv/releases/download/v2024.1.0/clspv-windows.zip
-          unzip clspv.zip -d clspv_bin
-          # Add to GITHUB_PATH so subsequent steps can find 'clspv.exe'
-          echo "$(pwd)/clspv_bin" >> $GITHUB_PATH
 
       - name: Setup Vulkan SDK
         uses: humbletim/install-vulkan-sdk@v1.2
@@ -60,12 +48,17 @@ jobs:
 
       - name: Build with Make
         run: |
-          # FIX: Use 'eval' and command substitution $() for the hook
           eval "$($MAMBA_EXE shell hook -s bash)"
           micromamba activate build-env
           
           echo "Building on $(uname -s)..."
-          make all
+          
+          # Force make to use Clang on Windows
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+             make all CXX=clang++ CC=clang
+          else
+             make all
+          fi
 
       - name: Prepare Artifacts
         run: |
