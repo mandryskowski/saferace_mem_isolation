@@ -35,7 +35,7 @@ jobs:
           environment-name: build-env
           create-args: >-
             make
-            ${{ matrix.os == 'windows-latest' && 'm2w64-gcc' || 'compilers' }}
+            ${{ matrix.os == 'windows-latest' && 'clang' || 'compilers' }}
             ${{ matrix.os != 'windows-latest' && 'clspv' || '' }}
           init-shell: bash
           generate-run-shell: false
@@ -48,12 +48,17 @@ jobs:
 
       - name: Build with Make
         run: |
-          # FIX: Use 'eval' and command substitution $() for the hook
           eval "$($MAMBA_EXE shell hook -s bash)"
           micromamba activate build-env
           
           echo "Building on $(uname -s)..."
-          make all
+          
+          # Force make to use Clang on Windows
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+             make all CXX=clang++ CC=clang
+          else
+             make all
+          fi
 
       - name: Prepare Artifacts
         run: |
