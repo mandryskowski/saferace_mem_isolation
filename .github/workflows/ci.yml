@@ -29,12 +29,12 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Vulkan SDK
-        uses: humbletim/install-vulkan-sdk@v1.2
+      - name: Prepare Vulkan SDK
+        uses: humbletim/setup-vulkan-sdk@v1.2.1
         with:
-          version: '1.4.321.0'
-          vulkan-components: Vulkan-Headers
-          cache: true
+          vulkan-query-version: 1.4.304.1
+          vulkan-components: Vulkan-Headers, Vulkan-Loader
+          vulkan-use-cache: true
 
       - name: Build with Make
         run: |
