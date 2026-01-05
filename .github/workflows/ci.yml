@@ -29,16 +29,16 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Micromamba
-        uses: mamba-org/setup-micromamba@v2
-        with:
-          environment-name: build-env
-          create-args: >-
-            make
-            ${{ matrix.os == 'windows-latest' && 'clang' || 'compilers' }}
-            ${{ matrix.os != 'windows-latest' && 'clspv' || '' }}
-          init-shell: bash
-          generate-run-shell: false
+      # - name: Setup Micromamba
+      #   uses: mamba-org/setup-micromamba@v2
+      #   with:
+      #     environment-name: build-env
+      #     create-args: >-
+      #       make
+      #       ${{ matrix.os == 'windows-latest' && 'clang' || 'compilers' }}
+      #       ${{ matrix.os != 'windows-latest' && 'clspv' || '' }}
+      #     init-shell: bash
+      #     generate-run-shell: false
 
       - name: Setup Vulkan SDK
         uses: humbletim/install-vulkan-sdk@v1.2
