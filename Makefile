@@ -8,7 +8,7 @@ ifeq ($(UNAME_S),Linux)
     VULKAN_LIB = -L"$(VULKAN_SDK)/lib" -lvulkan
 else
     VULKAN_INCLUDE = -I"$(VULKAN_SDK)/Include"
-    VULKAN_LIB = -L"$(VULKAN_SDK)/Lib" -lvulkan-1
+    VULKAN_LIB = -L"$(VULKAN_SDK)/Lib" -lvulkan-1 -static
 endif
 
 ALL_SHADERS = $(wildcard *.cl)
@@ -28,7 +28,7 @@ easyvk: easyvk/src/easyvk.cpp easyvk/src/easyvk.h
 	$(CXX) $(CXXFLAGS) $(VULKAN_INCLUDE) -Ieasyvk/src -c easyvk/src/easyvk.cpp -o build/easyvk.o
 
 runner: easyvk runner.cpp $(SPVS)
-	$(CXX) $(CXXFLAGS) $(VULKAN_INCLUDE) -Ieasyvk/src build/easyvk.o  runner.cpp $(VULKAN_LIB) -lvulkan-1 -static -o build/runner.run
+	$(CXX) $(CXXFLAGS) $(VULKAN_INCLUDE) -Ieasyvk/src build/easyvk.o  runner.cpp $(VULKAN_LIB) -o build/runner.run
 
 android: build $(SPVS)
 	ndk-build APP_BUILD_SCRIPT=./Android.mk  NDK_PROJECT_PATH=. NDK_APPLICATION_MK=./Application.mk NDK_LIBS_OUT=./build/android/libs NDK_OUT=./build/android/obj
